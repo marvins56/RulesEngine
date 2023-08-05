@@ -39,3 +39,16 @@ Suppose we have a dataset containing mobile money transaction records, including
 For instance, by selecting the "Rule: Liquidations from the same number within a specified time window (minutes)" and setting the time window to 10 minutes, the tool will identify transactions where a customer has made multiple liquidations within a 10-minute time frame.
 
 Similarly, by selecting the "Rule: Deposits or Float purchases to the same account within a specified time window (minutes)" and setting the time window to 5 minutes, the tool will flag transactions where an agent has made multiple deposits or float purchases to the same account within a 5-minute time frame.
+
+**Required Package Versions**
+
+The Mobile Money & Agent Banking Rules Engine requires the following package versions:
+
+pandas==1.5.3
+seaborn==0.12.2
+plotly==5.15.0
+numpy==1.23.5
+matplotlib==3.7.1
+langchain==0.0.212
+beautifulsoup4==4.12.2
+python-dotenv==1.0.0
