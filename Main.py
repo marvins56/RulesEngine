@@ -1,6 +1,6 @@
 
 import streamlit as st
-from CSV_Agent import chatbot
+# from CSV_Agent import chatbot
 
 from DataVisualisation import GetVisuals
 from RulesEngine import RulesEngine
@@ -22,8 +22,8 @@ def intro():
 page_names_to_funcs = {
     "—": intro,
     "Visualise Data": GetVisuals,
-    "RulesEngine": RulesEngine,
-    "CSV Chatbot" :chatbot
+    "RulesEngine": RulesEngine
+    # "CSV Chatbot" :chatbot
     
 }
 
