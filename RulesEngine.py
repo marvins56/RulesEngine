@@ -128,15 +128,57 @@ def rule_liquidations_same_number(data, time_window, number_column, biller_colum
 # Rule 1: Deposits (bank deposits) or Float purchases (MTN or Airtel float purchases) 
 # to the same account by the same agent within a specified time window (minutes)
 
+# def rule_deposit_or_float_same_account_time_window(data, time_window, agent_column, account_column, date_column):
+#     # Filter transactions for bank deposits and float purchases based on keywords
+#     bank_deposit_keywords = ['deposit', 'deposits', 'bank']
+#     mtn_float_keywords = ['MTN Float', 'MTN Float purchase']
+#     airtel_float_keywords = ['Airtel Float', 'Airtel Float purchase']
+
+#     bank_deposits = data[data[account_column].str.contains('|'.join(bank_deposit_keywords), case=False)]
+#     mtn_float_purchases = data[data[account_column].str.contains('|'.join(mtn_float_keywords), case=False)]
+#     airtel_float_purchases = data[data[account_column].str.contains('|'.join(airtel_float_keywords), case=False)]
+
+#     # Combine the filtered transactions for bank deposits and float purchases
+#     filtered_data = pd.concat([bank_deposits, mtn_float_purchases, airtel_float_purchases])
+
+#     # Sort the data by the date column in ascending order
+#     data_sorted = filtered_data.sort_values(by=date_column)
+
+#     # Initialize an empty list to store flagged transactions
+#     flagged_transactions = []
+
+#     # Iterate through each transaction in the sorted data
+#     for index, transaction in data_sorted.iterrows():
+#         # Find transactions made by the same agent to the same account within the time window
+#         mask = (data_sorted[agent_column] == transaction[agent_column]) & \
+#                (data_sorted[account_column] == transaction[account_column]) & \
+#                (data_sorted[date_column] >= transaction[date_column]) & \
+#                (data_sorted[date_column] <= transaction[date_column] + pd.Timedelta(minutes=time_window))
+
+#         # Check if there are any other transactions within the time window
+#         if len(data_sorted[mask]) > 1:
+#             flagged_transactions.extend(data_sorted[mask].to_dict(orient='records'))
+
+#     # Convert the list of flagged transactions to a DataFrame
+#     flagged_transactions = pd.DataFrame(flagged_transactions)
+
+#     return flagged_transactions
+
 def rule_deposit_or_float_same_account_time_window(data, time_window, agent_column, account_column, date_column):
     # Filter transactions for bank deposits and float purchases based on keywords
     bank_deposit_keywords = ['deposit', 'deposits', 'bank']
     mtn_float_keywords = ['MTN Float', 'MTN Float purchase']
     airtel_float_keywords = ['Airtel Float', 'Airtel Float purchase']
 
-    bank_deposits = data[data[account_column].str.contains('|'.join(bank_deposit_keywords), case=False)]
-    mtn_float_purchases = data[data[account_column].str.contains('|'.join(mtn_float_keywords), case=False)]
-    airtel_float_purchases = data[data[account_column].str.contains('|'.join(airtel_float_keywords), case=False)]
+    # Create masks for filtering
+    bank_deposit_mask = data[account_column].str.contains('|'.join(bank_deposit_keywords), case=False, na=False)
+    mtn_float_mask = data[account_column].str.contains('|'.join(mtn_float_keywords), case=False, na=False)
+    airtel_float_mask = data[account_column].str.contains('|'.join(airtel_float_keywords), case=False, na=False)
+
+    # Apply masks to filter data
+    bank_deposits = data[bank_deposit_mask]
+    mtn_float_purchases = data[mtn_float_mask]
+    airtel_float_purchases = data[airtel_float_mask]
 
     # Combine the filtered transactions for bank deposits and float purchases
     filtered_data = pd.concat([bank_deposits, mtn_float_purchases, airtel_float_purchases])
@@ -163,7 +205,6 @@ def rule_deposit_or_float_same_account_time_window(data, time_window, agent_colu
     flagged_transactions = pd.DataFrame(flagged_transactions)
 
     return flagged_transactions
-
 
 # Main Function
 def RulesEngine():
@@ -222,54 +263,3 @@ def RulesEngine():
 if __name__ == "__main__":
     RulesEngine()
 
-
-
-# def RulesEngine():
-#     def color_by_agent(data, agent_column='Agent Account'):
-#         unique_agents = data[agent_column].unique()
-#         agent_colors = {agent: f'#{random.randint(0, 0xFFFFFF):06X}' for agent in unique_agents}
-#         def apply_color(row):
-#             agent = row[agent_column]
-#             color = agent_colors.get(agent, 'white')
-#             return [f'background-color: {color}']*len(row)
-#         return data.style.apply(apply_color, axis=1)
-
-#     st.title("Mobile Money & Agent Banking Rules Engine")
-
-#     # Upload CSV or Excel file
-#     uploaded_file = st.file_uploader("Choose a CSV or Excel file", type=["csv", "xlsx"])
-#     if uploaded_file is not None:
-#         data = load_data(uploaded_file)
-
-#         # Clean data
-#         data = clean_data(data)
-
-#         # Data overview
-#         st.subheader("Data Overview")
-#         st.dataframe(color_by_agent(data.head()))
-
-#         # Rule Selection Dropdown
-#         selected_rule = st.selectbox("Select a rule to inspect transactions:", 
-#                                      ["---", 
-#                                       "Rule: Liquidations from the same number within a specified time window (minutes)",
-#                                       "Rule: Deposits or Float purchases to the same account within a specified time window (minutes)"
-#                                       # Add more rule options here...
-#                                       ])
-        
-#         # Apply the selected rule function and display the resulting transactions
-#         if selected_rule != "---":
-#             if selected_rule == "Rule: Liquidations from the same number within a specified time window (minutes)":
-#                 time_window = st.slider("Select the time window for liquidations (in minutes)", min_value=1, max_value=60, value=10)
-#                 flagged_transactions = rule_liquidations_same_number(data, time_window, 'Customer', 'Biller', 'Item', 'Date')
-                
-#                 # Display flagged transactions with coloring
-#                 st.subheader("Flagged Transactions")
-#                 st.dataframe(color_by_agent(flagged_transactions))
-            
-#             # Repeat for other rules...
-
-#         else:
-#             st.info("Please select a rule to inspect transactions.")
-
-# if __name__ == "__main__":
-#     RulesEngine()
