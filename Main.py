@@ -15,7 +15,7 @@ def intro():
         """
         **Use Case:**
       
-        **👈 Select an action from the dropdown on the left** to explore the capabilities of RTT.
+        **👈 Select an action from the dropdown on the left** .
         """
     )
 
