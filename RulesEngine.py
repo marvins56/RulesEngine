@@ -205,6 +205,7 @@ def rule_deposit_or_float_same_account_time_window(data, time_window, agent_colu
     flagged_transactions = pd.DataFrame(flagged_transactions)
 
     return flagged_transactions
+import time
 
 # Main Function
 def RulesEngine():
@@ -213,10 +214,13 @@ def RulesEngine():
     # Upload CSV or Excel file
     uploaded_file = st.file_uploader("Choose a CSV or Excel file", type=["csv", "xlsx"])
     if uploaded_file is not None:
-        data = load_data(uploaded_file)
+        # Show spinner while loading the data
+        with st.spinner("Loading data..."):
+            data = load_data(uploaded_file)
 
         # Clean data
-        data = clean_data(data)
+        with st.spinner("Cleaning data..."):
+            data = clean_data(data)
 
         # Data overview
         st.subheader("Data Overview")
@@ -235,7 +239,10 @@ def RulesEngine():
                 # Apply the selected rule function and display the resulting transactions
                 if selected_rule == "Rule: Liquidations from the same number within a specified time window (minutes)":
                     time_window = st.slider("Select the time window for liquidations (in minutes)", min_value=1, max_value=60, value=10)
-                    flagged_transactions = rule_liquidations_same_number(data, time_window, 'Customer', 'Biller', 'Item', 'Date')
+
+                    # Show spinner while applying the rule
+                    with st.spinner("Applying the rule..."):
+                        flagged_transactions = rule_liquidations_same_number(data, time_window, 'Customer', 'Biller', 'Item', 'Date')
 
                     # Display flagged transactions
                     st.subheader("Flagged Transactions")
@@ -243,10 +250,10 @@ def RulesEngine():
 
                 elif selected_rule == "Rule: Deposits or Float purchases to the same account within a specified time window (minutes)":
                     time_window = st.slider("Select the time window for deposits/float purchases (in minutes)", min_value=1, max_value=60, value=10)
-                    # flagged_transactions = rule_deposit_or_float_same_account_time_window(data, time_window, 'Agent Account', 'Biller', 'Item', 'Date')
-                    flagged_transactions = rule_deposit_or_float_same_account_time_window(data, time_window, 'Agent Account', 'Biller', 'Date')
 
-                    
+                    # Show spinner while applying the rule
+                    with st.spinner("Applying the rule..."):
+                        flagged_transactions = rule_deposit_or_float_same_account_time_window(data, time_window, 'Agent Account', 'Biller', 'Date')
 
                     # Display flagged transactions
                     st.subheader("Flagged Transactions")
@@ -262,4 +269,3 @@ def RulesEngine():
 
 if __name__ == "__main__":
     RulesEngine()
-
