@@ -44,11 +44,18 @@ Similarly, by selecting the "Rule: Deposits or Float purchases to the same accou
 
 The Mobile Money & Agent Banking Rules Engine requires the following package versions:
 
--[ ]pandas==1.5.3
-seaborn==0.12.2
-plotly==5.15.0
-numpy==1.23.5
-matplotlib==3.7.1
-langchain==0.0.212
-beautifulsoup4==4.12.2
-python-dotenv==1.0.0
+**pandas==1.5.3**
+
+**seaborn==0.12.2**
+
+**plotly==5.15.0**
+
+**numpy==1.23.5**
+
+**matplotlib==3.7.1**
+
+**langchain==0.0.212**
+
+**beautifulsoup4==4.12.2**
+
+**python-dotenv==1.0.0**
