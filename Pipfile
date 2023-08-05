@@ -9,7 +9,7 @@ seaborn= "==0.12.2"
 plotly= "==5.15.0"
 numpy= "==1.23.5"
 matplotlib= "==3.7.1"
-numpy="==1.23.5"
+
 langchain= "==0.0.212"
 
 [dev-packages]
