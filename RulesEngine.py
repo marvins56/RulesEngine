@@ -125,45 +125,6 @@ def rule_liquidations_same_number(data, time_window, number_column, biller_colum
 
 
 
-# Rule 1: Deposits (bank deposits) or Float purchases (MTN or Airtel float purchases) 
-# to the same account by the same agent within a specified time window (minutes)
-
-# def rule_deposit_or_float_same_account_time_window(data, time_window, agent_column, account_column, date_column):
-#     # Filter transactions for bank deposits and float purchases based on keywords
-#     bank_deposit_keywords = ['deposit', 'deposits', 'bank']
-#     mtn_float_keywords = ['MTN Float', 'MTN Float purchase']
-#     airtel_float_keywords = ['Airtel Float', 'Airtel Float purchase']
-
-#     bank_deposits = data[data[account_column].str.contains('|'.join(bank_deposit_keywords), case=False)]
-#     mtn_float_purchases = data[data[account_column].str.contains('|'.join(mtn_float_keywords), case=False)]
-#     airtel_float_purchases = data[data[account_column].str.contains('|'.join(airtel_float_keywords), case=False)]
-
-#     # Combine the filtered transactions for bank deposits and float purchases
-#     filtered_data = pd.concat([bank_deposits, mtn_float_purchases, airtel_float_purchases])
-
-#     # Sort the data by the date column in ascending order
-#     data_sorted = filtered_data.sort_values(by=date_column)
-
-#     # Initialize an empty list to store flagged transactions
-#     flagged_transactions = []
-
-#     # Iterate through each transaction in the sorted data
-#     for index, transaction in data_sorted.iterrows():
-#         # Find transactions made by the same agent to the same account within the time window
-#         mask = (data_sorted[agent_column] == transaction[agent_column]) & \
-#                (data_sorted[account_column] == transaction[account_column]) & \
-#                (data_sorted[date_column] >= transaction[date_column]) & \
-#                (data_sorted[date_column] <= transaction[date_column] + pd.Timedelta(minutes=time_window))
-
-#         # Check if there are any other transactions within the time window
-#         if len(data_sorted[mask]) > 1:
-#             flagged_transactions.extend(data_sorted[mask].to_dict(orient='records'))
-
-#     # Convert the list of flagged transactions to a DataFrame
-#     flagged_transactions = pd.DataFrame(flagged_transactions)
-
-#     return flagged_transactions
-
 def rule_deposit_or_float_same_account_time_window(data, time_window, agent_column, account_column, date_column):
     # Filter transactions for bank deposits and float purchases based on keywords
     bank_deposit_keywords = ['deposit', 'deposits', 'bank']
@@ -205,7 +166,7 @@ def rule_deposit_or_float_same_account_time_window(data, time_window, agent_colu
     flagged_transactions = pd.DataFrame(flagged_transactions)
 
     return flagged_transactions
-import time
+
 
 # Main Function
 def RulesEngine():

@@ -4,6 +4,7 @@ import streamlit as st
 
 from DataVisualisation import GetVisuals
 from RulesEngine import RulesEngine
+from SequentialRulesEngine import SequentialRulesEngine
 
 def intro():
     import streamlit as st
@@ -22,7 +23,8 @@ def intro():
 page_names_to_funcs = {
     "—": intro,
     "Visualise Data": GetVisuals,
-    "RulesEngine": RulesEngine
+    "RulesEngine": RulesEngine,
+    "SequentialRulesEngine":SequentialRulesEngine
     # "CSV Chatbot" :chatbot
     
 }

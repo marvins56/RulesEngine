@@ -2,3 +2,10 @@
 .env
 Book1.xlsx
 *.csv
+*.xlsx
+*.txt
+*.txt
+Results/Rule1/Flagged/flagged
+Results/Rule1/Good/good
+Results/Rule2/Good/good
+Results/Rule2/Flagged/flagged
