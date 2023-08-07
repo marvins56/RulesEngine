@@ -231,12 +231,13 @@ def rule_deposit_or_float_same_account_time_window(data, time_window, agent_colu
 
 
 # Placeholder column names (replace with actual column names from your data)
-number_column = "Agent Account"  # Example, update as needed
+number_column = "Customer"  # Example, update as needed
 biller_column = "Biller"    # Example, update as needed
 item_column = "Item"           # Example, update as needed
 timestamp_column = "Date"             # Example, update as needed
 terminal_column = "Terminal"
 name_column = "Name"
+
 
 def SequentialRulesEngine():
     st.title("Sequential Rules Engine")
@@ -287,7 +288,8 @@ def SequentialRulesEngine():
                 good_data_rule1, time_window_minutes_rule2, number_column, biller_column, timestamp_column)
             save_results_to_folders(flagged_data_rule2, "Results", "Rule2", "Flagged", "flagged.csv")
             save_results_to_folders(good_data_rule2, "Results", "Rule2", "Good", "good.csv")
-
+            st.write(f"Flagged Transactions (Rule 2): {len(flagged_data_rule2)}")
+            st.write(f"Good Transactions (Rule 2): {len(good_data_rule2)}")
                         # Display flagged transactions in dropdowns for each agent (Rule 2)
             st.write("Flagged Transactions (Rule 2):")
             unique_agents_rule2 = flagged_data_rule2[number_column].unique()
