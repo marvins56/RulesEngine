@@ -149,38 +149,6 @@ def rule_liquidations_same_number(data, time_window_minutes, number_column, bill
 
     return flagged_data, good_data
 
-# # Updated Rule 2 function
-# def rule_deposit_or_float_same_account_time_window(data, time_window_minutes, number_column, biller_column, item_column, timestamp_column):
-#     # Sorting by date
-#     data[timestamp_column] = pd.to_datetime(data[timestamp_column])
-#     data_sorted = data.sort_values(by=timestamp_column)
-
-#     # Identifying flagged transactions (existing logic)
-#     flagged_data = pd.DataFrame()
-#     for index, row in data_sorted.iterrows():
-#         same_account_data = data_sorted[data_sorted[number_column] == row[number_column]]
-#         same_account_data_within_window = same_account_data[
-#             (same_account_data[timestamp_column] >= row[timestamp_column] - pd.Timedelta(minutes=time_window_minutes)) &
-#             (same_account_data[timestamp_column] <= row[timestamp_column])
-#         ]
-
-#         if len(same_account_data_within_window) > 1:
-#             flagged_data = flagged_data.append(row)
-
-#     # Filtering flagged transactions for bank deposits, MTN float purchases, and Airtel float purchases
-#     flagged_data_filtered = flagged_data[
-#         (flagged_data[biller_column].str.contains('Bank Deposit') & flagged_data[item_column].str.contains('BANK DEPOSIT')) |
-#         (flagged_data[biller_column].str.contains('MTN Float Purchase') & flagged_data[item_column].str.contains('MTN FLOAT PURCHASE')) |
-#         (flagged_data[biller_column].str.contains('Airtel Float Purchase') & flagged_data[item_column].str.contains('AIRTEL FLOAT PURCHASE'))
-#     ]
-
-#     # Identifying good transactions
-#     good_data = data_sorted[~data_sorted.index.isin(flagged_data_filtered.index)]
-
-#     # Save flagged and good data to separate folders within the Rule2 folder with date and time in the file name
-#     save_results_to_folders(flagged_data_filtered, "Results", "Rule2", "Flagged", "flagged")
-#     save_results_to_folders(good_data, "Results", "Rule2", "Good", "good")
-
 #     return flagged_data_filtered, good_data
 def rule_deposit_or_float_same_account_time_window(data, time_window, agent_column, account_column, date_column):
     # Ensure the date column is in datetime format
@@ -271,7 +239,7 @@ def SequentialRulesEngine():
             terminal_number = agent_transactions[terminal_column].iloc[0]
             agent_name = agent_transactions[name_column].iloc[0]
             total_transactions = len(agent_transactions)
-            if st.checkbox(f"Agent: {agent_name} | Terminal: {terminal_number} | Account: {agent_number} | Transactions: {total_transactions} (Rule 1)"):
+            if st.checkbox(f"Agent: {agent_name} | Terminal: {terminal_number} | Customer Acct: {agent_number} | Transactions: {total_transactions} (Rule 1)"):
                 st.write(agent_transactions)
                 st.markdown("---")
 
@@ -298,7 +266,7 @@ def SequentialRulesEngine():
                 terminal_number = agent_transactions[terminal_column].iloc[0]
                 agent_name = agent_transactions[name_column].iloc[0]
                 total_transactions = len(agent_transactions)
-                if st.checkbox(f"Agent: {agent_name} | Terminal: {terminal_number} | Account: {agent_number} | Transactions: {total_transactions} (Rule 2)"):
+                if st.checkbox(f"Agent: {agent_name} | Terminal: {terminal_number} | Customer Acct: {agent_number} | Transactions: {total_transactions} (Rule 2)"):
                     st.write(agent_transactions)
                     st.markdown("---")
 
