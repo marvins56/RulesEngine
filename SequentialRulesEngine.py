@@ -197,16 +197,48 @@ def rule_deposit_or_float_same_account_time_window(data, time_window, agent_colu
 
     return flagged_transactions, good_transactions
 
+def rule_more_than_n_deposits_a_day(data, n, agent_column, account_column, date_column):
+    # Filter transactions for bank deposits based on keywords
+    bank_deposit_keywords = ['deposit', 'deposits', 'bank']
+    # Convert the account_column to string type if it's not already
+    data[account_column] = data[account_column].astype(str)
 
-# Placeholder column names (replace with actual column names from your data)
-number_column = "Customer"  # Example, update as needed
-biller_column = "Biller"    # Example, update as needed
-item_column = "Item"           # Example, update as needed
-timestamp_column = "Date"             # Example, update as needed
-terminal_column = "Terminal"
-name_column = "Name"
+    # Create a mask for filtering bank deposits
+    bank_deposit_mask = data[account_column].str.contains('|'.join(bank_deposit_keywords), case=False, na=False)
+
+    # Apply the mask to filter data
+    bank_deposits = data[bank_deposit_mask]
+
+    # Group bank deposit data by agent, account, and date and calculate the number of deposits on each day
+    bank_deposits['DepositCount'] = bank_deposits.groupby([agent_column, account_column, bank_deposits[date_column].dt.date])[date_column].transform('count')
+
+    # Filter transactions with more than n deposits on the same day by the same customer
+    suspicious_transactions = bank_deposits[bank_deposits['DepositCount'] > n]
+
+    # Get the indices of the flagged transactions
+    flagged_indices = suspicious_transactions.index
+
+    # Remove flagged transactions from the original DataFrame to get good transactions
+    good_transactions = bank_deposits.drop(flagged_indices).drop(columns=['DepositCount'])
+
+    # Save flagged transactions to a separate CSV file
+    save_results_to_folders(suspicious_transactions, "Results", "Rule3", "Flagged", "flagged.csv")
+
+    # Save good transactions to a separate CSV file
+    save_results_to_folders(good_transactions, "Results", "Rule3", "Good", "good.csv")
+
+    return suspicious_transactions, good_transactions
 
 
+
+number_column = "Customer"
+biller_column = "Biller"
+item_column = "Item"
+timestamp_column = "Date"  # Replace "Date" with the correct column name for timestamps, if available
+terminal_column = "Terminal"  # Replace "Terminal" with the correct column name for terminals, if available
+name_column = "Name"  # Replace "Name" with the correct column name for names, if available
+account_column = "Agent Account"  # Replace "Agent Account" with the correct column name for accounts
+    
 def SequentialRulesEngine():
     st.title("Sequential Rules Engine")
     uploaded_file = st.file_uploader("Choose a CSV or Excel file", type=["csv", "xlsx"])
@@ -231,7 +263,7 @@ def SequentialRulesEngine():
         st.write(f"Flagged Transactions (Rule 1): {len(flagged_data_rule1)}")
         st.write(f"Good Transactions (Rule 1): {len(good_data_rule1)}")
 
-      # Display flagged transactions in dropdowns for each agent (Rule 1)
+        # Display flagged transactions in dropdowns for each agent (Rule 1)
         st.write("Flagged Transactions (Rule 1):")
         unique_agents_rule1 = flagged_data_rule1[number_column].unique()
         for agent_number in unique_agents_rule1:
@@ -243,7 +275,6 @@ def SequentialRulesEngine():
                 st.write(agent_transactions)
                 st.markdown("---")
 
-
         # Loading good data from Rule 1
         with st.spinner('Loading good data from Rule 1...'):
             good_data_path_rule1 = os.path.join("Results", "Rule1", "Good", "good.csv")
@@ -251,14 +282,15 @@ def SequentialRulesEngine():
 
         # Code for Rule 2 using the refactored function
         time_window_minutes_rule2 = st.slider("Time Window for Rule 2 (minutes):", 1, 15, 5)
-        with st.spinner('Applying Rule 2:Deposits or Float purchases to the same account within a specified time window (minutes)'):
+        with st.spinner('Applying Rule 2: Deposits or Float purchases to the same account within a specified time window (minutes)'):
             flagged_data_rule2, good_data_rule2 = rule_deposit_or_float_same_account_time_window(
                 good_data_rule1, time_window_minutes_rule2, number_column, biller_column, timestamp_column)
             save_results_to_folders(flagged_data_rule2, "Results", "Rule2", "Flagged", "flagged.csv")
             save_results_to_folders(good_data_rule2, "Results", "Rule2", "Good", "good.csv")
             st.write(f"Flagged Transactions (Rule 2): {len(flagged_data_rule2)}")
             st.write(f"Good Transactions (Rule 2): {len(good_data_rule2)}")
-                        # Display flagged transactions in dropdowns for each agent (Rule 2)
+
+            # Display flagged transactions in dropdowns for each agent (Rule 2)
             st.write("Flagged Transactions (Rule 2):")
             unique_agents_rule2 = flagged_data_rule2[number_column].unique()
             for agent_number in unique_agents_rule2:
@@ -269,10 +301,31 @@ def SequentialRulesEngine():
                 if st.checkbox(f"Agent: {agent_name} | Terminal: {terminal_number} | Customer Acct: {agent_number} | Transactions: {total_transactions} (Rule 2)"):
                     st.write(agent_transactions)
                     st.markdown("---")
-            # Add buttons to download the final clean data and flagged data for each rule
+
+        # Code for Rule 3 using the refactored function
+        n_rule3 = st.slider("Number of deposits a day by the same customer:", 1, 10, 3)
+        with st.spinner('Applying Rule 3: More than n deposits a day by the same customer to the same account'):
+            flagged_data_rule3, good_data_rule3 = rule_more_than_n_deposits_a_day(
+                good_data_rule2, n_rule3, number_column, account_column, timestamp_column)
+            save_results_to_folders(flagged_data_rule3, "Results", "Rule3", "Flagged", "flagged.csv")
+            save_results_to_folders(good_data_rule3, "Results", "Rule3", "Good", "good.csv")
+        st.write(f"Flagged Transactions (Rule 3): {len(flagged_data_rule3)}")
+        st.write(f"Good Transactions (Rule 3): {len(good_data_rule3)}")
+
+        # Display flagged transactions in dropdowns for each customer (Rule 3)
+        st.write("Flagged Transactions (Rule 3):")
+        unique_customers_rule3 = flagged_data_rule3[number_column].unique()
+        for customer_number in unique_customers_rule3:
+            customer_transactions = flagged_data_rule3[flagged_data_rule3[number_column] == customer_number]
+            total_transactions = len(customer_transactions)
+            if st.checkbox(f"Customer: {customer_number} | Transactions: {total_transactions} (Rule 3)"):
+                st.write(customer_transactions)
+                st.markdown("---")
+
+      # Add buttons to download the final clean data and flagged data for each rule
         st.sidebar.subheader("Download Data")
         if st.sidebar.button("Download Clean Data"):
-            st.sidebar.download_button("Click to Download Clean Data", data.to_csv(), file_name="clean_data.csv", mime="text/csv")
+            st.sidebar.download_button("Click to Download Clean Data", good_data_rule3.to_csv(), file_name="clean_data.csv", mime="text/csv")
 
         if st.sidebar.button("Download Flagged Data (Rule 1)"):
             flagged_data_path_rule1 = os.path.join("Results", "Rule1", "Flagged", "flagged.csv")
@@ -282,12 +335,13 @@ def SequentialRulesEngine():
             flagged_data_path_rule2 = os.path.join("Results", "Rule2", "Flagged", "flagged.csv")
             st.sidebar.download_button("Click to Download Flagged Data (Rule 2)", flagged_data_rule2.to_csv(), file_name="flagged_data_rule2.csv", mime="text/csv")
 
-
-        # Continue with subsequent rules, using spinners as needed
+        if st.sidebar.button("Download Flagged Data (Rule 3)"):
+            flagged_data_path_rule3 = os.path.join("Results", "Rule3", "Flagged", "flagged.csv")
+            st.sidebar.download_button("Click to Download Flagged Data (Rule 3)", flagged_data_rule3.to_csv(), file_name="flagged_data_rule3.csv", mime="text/csv")
+                # Continue with subsequent rules, using spinners as needed
 
     else:
         st.warning("Please upload a CSV or Excel file.")
-
 
 # Uncomment to run the app (only if running locally)
 if __name__ == "__main__":
