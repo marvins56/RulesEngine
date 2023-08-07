@@ -149,7 +149,53 @@ def rule_liquidations_same_number(data, time_window_minutes, number_column, bill
 
     return flagged_data, good_data
 
-#     return flagged_data_filtered, good_data
+# #     return flagged_data_filtered, good_data
+# def rule_deposit_or_float_same_account_time_window(data, time_window, agent_column, account_column, date_column):
+#     # Ensure the date column is in datetime format
+#     data[date_column] = pd.to_datetime(data[date_column])
+
+#     # Set the date column as the index and sort it
+#     data = data.set_index(date_column).sort_index()
+
+#     # Keywords for filtering
+#     bank_deposit_keywords = ['deposit', 'deposits', 'bank']
+#     mtn_float_keywords = ['MTN Float', 'MTN Float purchase']
+#     airtel_float_keywords = ['Airtel Float', 'Airtel Float purchase']
+
+#     # Create masks for filtering
+#     bank_deposit_mask = data[account_column].str.contains('|'.join(bank_deposit_keywords), case=False, na=False)
+#     mtn_float_mask = data[account_column].str.contains('|'.join(mtn_float_keywords), case=False, na=False)
+#     airtel_float_mask = data[account_column].str.contains('|'.join(airtel_float_keywords), case=False, na=False)
+
+#     # Apply masks to filter data
+#     filtered_data = pd.concat([data[bank_deposit_mask], data[mtn_float_mask], data[airtel_float_mask]])
+
+#     # Initialize an empty DataFrame to store flagged transactions
+#     flagged_transactions = pd.DataFrame()
+
+#     # Iterate through each transaction in the sorted data
+#     for date, transaction in filtered_data.iterrows():
+#         # Find transactions made by the same agent to the same account within the time window
+#         mask = (filtered_data[agent_column] == transaction[agent_column]) & \
+#                (filtered_data[account_column] == transaction[account_column]) & \
+#                (filtered_data.index >= date) & \
+#                (filtered_data.index <= date + pd.Timedelta(minutes=time_window))
+
+#         # Check if there are any other transactions within the time window
+#         if len(filtered_data[mask]) > 1:
+#             flagged_transactions = flagged_transactions.append(filtered_data[mask])
+
+#     # Remove duplicates from flagged transactions
+#     # flagged_transactions = flagged_transactions.drop_duplicates()
+
+#     # Get the good (unflagged) transactions by excluding the flagged ones
+#     good_transactions = data.loc[~data.index.isin(flagged_transactions.index)]
+
+#     # Reset the index for the final result
+#     flagged_transactions.reset_index(inplace=True)
+#     good_transactions.reset_index(inplace=True)
+
+#     return flagged_transactions, good_transactions
 def rule_deposit_or_float_same_account_time_window(data, time_window, agent_column, account_column, date_column):
     # Ensure the date column is in datetime format
     data[date_column] = pd.to_datetime(data[date_column])
@@ -183,10 +229,10 @@ def rule_deposit_or_float_same_account_time_window(data, time_window, agent_colu
 
         # Check if there are any other transactions within the time window
         if len(filtered_data[mask]) > 1:
-            flagged_transactions = flagged_transactions.append(filtered_data[mask])
+            flagged_transactions = pd.concat([flagged_transactions, filtered_data[mask]])
 
     # Remove duplicates from flagged transactions
-    # flagged_transactions = flagged_transactions.drop_duplicates()
+    flagged_transactions = flagged_transactions.drop_duplicates()
 
     # Get the good (unflagged) transactions by excluding the flagged ones
     good_transactions = data.loc[~data.index.isin(flagged_transactions.index)]
