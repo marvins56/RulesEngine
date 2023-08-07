@@ -269,6 +269,18 @@ def SequentialRulesEngine():
                 if st.checkbox(f"Agent: {agent_name} | Terminal: {terminal_number} | Customer Acct: {agent_number} | Transactions: {total_transactions} (Rule 2)"):
                     st.write(agent_transactions)
                     st.markdown("---")
+            # Add buttons to download the final clean data and flagged data for each rule
+        st.sidebar.subheader("Download Data")
+        if st.sidebar.button("Download Clean Data"):
+            st.sidebar.download_button("Click to Download Clean Data", data.to_csv(), file_name="clean_data.csv", mime="text/csv")
+
+        if st.sidebar.button("Download Flagged Data (Rule 1)"):
+            flagged_data_path_rule1 = os.path.join("Results", "Rule1", "Flagged", "flagged.csv")
+            st.sidebar.download_button("Click to Download Flagged Data (Rule 1)", flagged_data_rule1.to_csv(), file_name="flagged_data_rule1.csv", mime="text/csv")
+
+        if st.sidebar.button("Download Flagged Data (Rule 2)"):
+            flagged_data_path_rule2 = os.path.join("Results", "Rule2", "Flagged", "flagged.csv")
+            st.sidebar.download_button("Click to Download Flagged Data (Rule 2)", flagged_data_rule2.to_csv(), file_name="flagged_data_rule2.csv", mime="text/csv")
 
 
         # Continue with subsequent rules, using spinners as needed
