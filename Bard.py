@@ -1,54 +1,34 @@
-
-
 import streamlit as st
 import dask.dataframe as dd
 import pandas as pd
 import base64
 
-# def check_deposits_within_time_window(data, time_window):
-#     deposits_data = data[data['txn_type'].isin(['FLOAT_DEPOSIT', 'CDP'])]
-#     deposits_data['date_time'] = dd.to_datetime(deposits_data['date_time'])
-#     deposits_data = deposits_data.compute()
-#     deposits_data = deposits_data.sort_values(['agent_code', 'date_time'])
-#     deposits_data['time_diff'] = deposits_data.groupby('agent_code')['date_time'].diff().dt.total_seconds() / 60
-#     flagged_transactions = deposits_data['time_diff'] <= time_window
-#     flagged_data = deposits_data[flagged_transactions]
-
-#     # Getting the index of flagged transactions
-#     flagged_index = flagged_data.index
-#     # Removing the flagged transactions from the original data
-#     remaining_data = data.loc[~data.index.isin(flagged_index)]
-#     return flagged_data, remaining_data
-
-
-def check_deposits_within_time_window(data, time_window, callback1=None, callback2=None, callback3=None, callback4=None):
-    if callback1: callback1("Filtering deposit transactions...")
+def check_deposits_within_time_window(data, time_window):
     deposits_data = data[data['txn_type'].isin(['FLOAT_DEPOSIT', 'CDP'])]
-    
-    if callback2: callback2("Converting date and time...")
     deposits_data['date_time'] = dd.to_datetime(deposits_data['date_time'])
     deposits_data = deposits_data.compute()
-    
-    if callback3: callback3("Sorting and calculating time differences...")
-    deposits_data = deposits_data.sort_values(['agent_code', 'date_time'])
-    deposits_data['time_diff'] = deposits_data.groupby('agent_code')['date_time'].diff().dt.total_seconds() / 60
+    deposits_data = deposits_data.sort_values(['agent_code', 'ACC/NO', 'date_time'])
+    deposits_data['time_diff'] = deposits_data.groupby(['agent_code', 'ACC/NO'])['date_time'].diff().dt.total_seconds() / 60
     flagged_transactions = deposits_data['time_diff'] <= time_window
     flagged_data = deposits_data[flagged_transactions]
-
-    if callback4: callback4("Extracting flagged transactions and clean data...")
+    
     # Getting the index of flagged transactions
     flagged_index = flagged_data.index
+    
     # Removing the flagged transactions from the original data
     remaining_data = data.loc[~data.index.isin(flagged_index)]
 
     return flagged_data, remaining_data
 
 
+
 def generate_download_link(data, filename):
     b64 = base64.b64encode(data.encode()).decode()
     return f'<a href="data:file/csv;base64,{b64}" download="{filename}">Click here to download</a>'
 def NEW():
-    st.title("Transaction Rule Engine - Rule 1: Time Window Rule")
+    st.title("Transaction Rule Engine")
+    st.write("1. Deposits / Float purchase to same account by same agent within 5 minutes or less")
+
 
     uploaded_file = st.file_uploader("Choose a CSV or Excel file", type=['csv', 'xlsx'])
     time_window = st.slider("Time Window (minutes)", min_value=0, max_value=5, value=5)
