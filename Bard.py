@@ -82,7 +82,7 @@ def NEW():
             flagged_agents = flagged_data[flagged_data['agent_code'].isin(top_10_agents)].groupby('agent_code').agg(
                 total_flagged=('agent_code', 'count')
             )
-        st.subheader("Flagged Transactions by Agent")
+        st.subheader("Top Flagged Transactions by Agent")
         st.write(flagged_agents)
 
         # Convert Dask DataFrames to CSV strings
