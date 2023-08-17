@@ -1,10 +1,12 @@
 
 import streamlit as st
+from Bard import NEW
 # from CSV_Agent import chatbot
 
 from DataVisualisation import GetVisuals
 from RulesEngine import RulesEngine
 from SequentialRulesEngine import SequentialRulesEngine
+from TRY import TRY
 
 def intro():
     import streamlit as st
@@ -20,11 +22,14 @@ def intro():
         """
     )
 
+
 page_names_to_funcs = {
     "—": intro,
     "Visualise Data": GetVisuals,
-    "RulesEngine": RulesEngine,
-    "SequentialRulesEngine":SequentialRulesEngine
+    "NEW RULES" : NEW,
+    "TRIAL IN PROGRESS" :TRY
+    # "RulesEngine": RulesEngine,
+    # "SequentialRulesEngine":SequentialRulesEngine
     # "CSV Chatbot" :chatbot
     
 }

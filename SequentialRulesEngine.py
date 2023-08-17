@@ -369,22 +369,19 @@ def SequentialRulesEngine():
                 st.markdown("---")
 
       # Add buttons to download the final clean data and flagged data for each rule
-        st.sidebar.subheader("Download Data")
-        if st.sidebar.button("Download Clean Data"):
-            st.sidebar.download_button("Click to Download Clean Data", good_data_rule3.to_csv(), file_name="clean_data.csv", mime="text/csv")
+       
+        st.sidebar.download_button("Click to Download Clean Data", good_data_rule3.to_csv(), file_name="clean_data.csv", mime="text/csv")
+        flagged_data_path_rule1 = os.path.join("Results", "Rule1", "Flagged", "flagged.csv")
+        st.sidebar.download_button("Click to Download Flagged Data (Rule 1)", flagged_data_rule1.to_csv(), file_name="flagged_data_rule1.csv", mime="text/csv")
 
-        if st.sidebar.button("Download Flagged Data (Rule 1)"):
-            flagged_data_path_rule1 = os.path.join("Results", "Rule1", "Flagged", "flagged.csv")
-            st.sidebar.download_button("Click to Download Flagged Data (Rule 1)", flagged_data_rule1.to_csv(), file_name="flagged_data_rule1.csv", mime="text/csv")
+      
+        flagged_data_path_rule2 = os.path.join("Results", "Rule2", "Flagged", "flagged.csv")
+        st.sidebar.download_button("Click to Download Flagged Data (Rule 2)", flagged_data_rule2.to_csv(), file_name="flagged_data_rule2.csv", mime="text/csv")
 
-        if st.sidebar.button("Download Flagged Data (Rule 2)"):
-            flagged_data_path_rule2 = os.path.join("Results", "Rule2", "Flagged", "flagged.csv")
-            st.sidebar.download_button("Click to Download Flagged Data (Rule 2)", flagged_data_rule2.to_csv(), file_name="flagged_data_rule2.csv", mime="text/csv")
-
-        if st.sidebar.button("Download Flagged Data (Rule 3)"):
-            flagged_data_path_rule3 = os.path.join("Results", "Rule3", "Flagged", "flagged.csv")
-            st.sidebar.download_button("Click to Download Flagged Data (Rule 3)", flagged_data_rule3.to_csv(), file_name="flagged_data_rule3.csv", mime="text/csv")
-                # Continue with subsequent rules, using spinners as needed
+     
+        flagged_data_path_rule3 = os.path.join("Results", "Rule3", "Flagged", "flagged.csv")
+        st.sidebar.download_button("Click to Download Flagged Data (Rule 3)", flagged_data_rule3.to_csv(), file_name="flagged_data_rule3.csv", mime="text/csv")
+                # Continue with subsequent rules, using spinners as needed   
 
     else:
         st.warning("Please upload a CSV or Excel file.")
