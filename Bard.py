@@ -11,7 +11,6 @@ def check_deposits_within_time_window(data, time_window):
     deposits_data['time_diff'] = deposits_data.groupby(['agent_code', 'ACC/NO'])['date_time'].diff().dt.total_seconds() / 60
     flagged_transactions = deposits_data['time_diff'] <= time_window
     flagged_data = deposits_data[flagged_transactions]
-    
     # Getting the index of flagged transactions
     flagged_index = flagged_data.index
     
