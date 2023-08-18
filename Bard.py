@@ -58,7 +58,7 @@ def NEW():
                 total_amount=(' Amount ', 'sum')
             ).nlargest(5, 'total_transactions')
             top_channels = flagged_data['Channel'].value_counts().nlargest(5)
-            top_acquirers = flagged_data['Acquirer'].value_counts().nlargest(5)  # Top 3 acquirers
+            # top_acquirers = flagged_data['Acquirer'].value_counts().nlargest(5)  # Top 3 acquirers
         # General Statistics
         st.subheader("Statistics for Flagged Transactions")
         st.write(f"Total Flagged Transactions: {total_flagged}")
@@ -73,9 +73,9 @@ def NEW():
         st.subheader("Top Channels in Flagged Transactions")
         st.write(top_channels)
 
-        # Acquirer
-        st.subheader("Acquirer with Most Flagged Transactions")
-        st.table({"Acquirer": top_acquirers.tolist()})  
+        # # Acquirer
+        # st.subheader("Acquirer with Most Flagged Transactions")
+        # st.table({"Acquirer": top_acquirers.tolist()})  
 
         # Display flagged transactions statistics for each agent
         with st.spinner("Generating Agent Statistics..."):
