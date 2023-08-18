@@ -11,6 +11,10 @@ def check_deposits_within_time_window(data, time_window):
     deposits_data['time_diff'] = deposits_data.groupby(['agent_code', 'ACC/NO'])['date_time'].diff().dt.total_seconds() / 60
     flagged_transactions = deposits_data['time_diff'] <= time_window
     flagged_data = deposits_data[flagged_transactions]
+    
+    # Filter out only successful transactions from flagged data
+    flagged_data = flagged_data[flagged_data['Response_code'] == 0]
+    
     # Getting the index of flagged transactions
     flagged_index = flagged_data.index
     
@@ -20,14 +24,13 @@ def check_deposits_within_time_window(data, time_window):
     return flagged_data, remaining_data
 
 
-
 def generate_download_link(data, filename):
     b64 = base64.b64encode(data.encode()).decode()
     return f'<a href="data:file/csv;base64,{b64}" download="{filename}">Click here to download</a>'
+
 def NEW():
     st.title("Transaction Rule Engine")
     st.write("1. Deposits / Float purchase to same account by same agent within 5 minutes or less")
-
 
     uploaded_file = st.file_uploader("Choose a CSV or Excel file", type=['csv', 'xlsx'])
     time_window = st.slider("Time Window (minutes)", min_value=0, max_value=5, value=5)
@@ -55,8 +58,7 @@ def NEW():
                 total_amount=(' Amount ', 'sum')
             ).nlargest(5, 'total_transactions')
             top_channels = flagged_data['Channel'].value_counts().nlargest(5)
-            top_acquirer = flagged_data['Acquirer'].value_counts().idxmax()
-
+            top_acquirers = flagged_data['Acquirer'].value_counts().nlargest(5)  # Top 3 acquirers
         # General Statistics
         st.subheader("Statistics for Flagged Transactions")
         st.write(f"Total Flagged Transactions: {total_flagged}")
@@ -73,7 +75,7 @@ def NEW():
 
         # Acquirer
         st.subheader("Acquirer with Most Flagged Transactions")
-        st.write(f"Acquirer: {top_acquirer}")
+        st.table({"Acquirer": [top_acquirers]})
 
         # Display flagged transactions statistics for each agent
         with st.spinner("Generating Agent Statistics..."):
@@ -95,14 +97,12 @@ def NEW():
         remaining_filename = "remaining_data.csv"
         remaining_link = generate_download_link(remaining_csv, remaining_filename)
 
-        with st.spinner("Generating Download Links..."):
-            st.subheader("Download Data")
-            st.write("Download flagged data:")
-            st.markdown(flagged_link, unsafe_allow_html=True)
-            st.write("Download remaining data:")
-            st.markdown(remaining_link, unsafe_allow_html=True)
-
+        # Sidebar section for download links
+        st.subheader("Download Data")
+        st.write("Download flagged data:")
+        st.markdown(flagged_link, unsafe_allow_html=True)
+        st.write("Download remaining data:")
+        st.markdown(remaining_link, unsafe_allow_html=True)
+               
 if __name__ == "__main__":
     NEW()
-
-
