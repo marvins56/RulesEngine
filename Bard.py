@@ -75,7 +75,7 @@ def NEW():
 
         # Acquirer
         st.subheader("Acquirer with Most Flagged Transactions")
-        st.table({"Acquirer": [top_acquirers]})
+        st.table({"Acquirer": top_acquirers.tolist()})  
 
         # Display flagged transactions statistics for each agent
         with st.spinner("Generating Agent Statistics..."):
