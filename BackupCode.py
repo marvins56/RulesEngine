@@ -75,10 +75,13 @@ def flag_transactions(transactions, transaction_type, reason_code_counter):
         if not group_within_15mins.empty:
             reason_code = f"RC{str(reason_code_counter).zfill(2)}"
             group_within_15mins.loc[:, 'reason_code'] = reason_code  # Use .loc to assign the value
+            
             filtered_groups.append(group_within_15mins)
             reason_code_counter += 1
 
-    flagged_data = pd.concat(filtered_groups, ignore_index=True)
+    flagged_data = pd.DataFrame()  # Initialize as empty DataFrame
+    if filtered_groups:  # Check if filtered_groups is not empty
+        flagged_data = pd.concat(filtered_groups, ignore_index=True)
 
     # Drop the time_diff column
     flagged_data.drop(columns=['time_diff'], inplace=True)

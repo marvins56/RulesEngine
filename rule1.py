@@ -179,6 +179,7 @@ def combine_and_flag_transactions(float_purchases, cdp_transactions):
     if not group_within_15mins.empty:
         reason_code = f"RC{str(reason_code_counter).zfill(2)}"
         group_within_15mins.loc[:, 'reason_code'] = reason_code  # Use .loc to assign the value
+        
         filtered_groups.append(group_within_15mins)
         reason_code_counter += 1
 
