@@ -1,11 +1,7 @@
 
 import streamlit as st
-from Bard import NEW
-# from CSV_Agent import chatbot
-
-from DataVisualisation import GetVisuals
-
-
+from BackupCode import main_ui
+from rule1 import main_ui2
 
 def intro():
     import streamlit as st
@@ -25,7 +21,9 @@ def intro():
 page_names_to_funcs = {
     "—": intro,
 
-    "NEW RULES" : NEW
+    "BETTER " : main_ui,
+    "IN PROGRESS":main_ui2
+    
  
     # "RulesEngine": RulesEngine,
     # "SequentialRulesEngine":SequentialRulesEngine
