@@ -5,11 +5,29 @@ import dask.dataframe as dd
 import base64
 from datetime import datetime, timedelta
 
+# def filter_repeated_transactions(data):
+#     try:
+#         filtered_data = data[data['txn_type'].isin(['FLOAT_DEPOSIT', 'CDP'])]
+#         filtered_data = filtered_data.compute()
 
+#         # Keep only the necessary columns
+#         columns_to_keep = ['agent_code', 'ACC/NO', 'txn_type', 'Response_code', 'date_time','AGENTNAMES',' Amount ']
+#         filtered_data = filtered_data[columns_to_keep]
+
+#         repeated_transactions = filtered_data.groupby(['agent_code', 'ACC/NO']).filter(lambda x: len(x) > 2)
+#         successful_repeated_transactions = repeated_transactions[repeated_transactions['Response_code'] == 0]
+#         return successful_repeated_transactions
+#     except Exception as e:
+#         st.error("An error occurred while filtering repeated transactions.")
+#         st.write(e)
+#         return None
 
 def filter_repeated_transactions(data):
     try:
-        filtered_data = data[data['txn_type'].isin(['FLOAT_DEPOSIT', 'CDP'])]
+        # Update the keywords for filtering
+        float_purchase_keywords = ['AIRTELFLOATPURCHASE_W', 'MTNFLOATPURCHASE_W','CDP']
+        
+        filtered_data = data[data['txn_type'].isin(float_purchase_keywords)]
         filtered_data = filtered_data.compute()
 
         # Keep only the necessary columns
@@ -24,19 +42,32 @@ def filter_repeated_transactions(data):
         st.write(e)
         return None
 
+
 def generate_download_link(data, filename):
     b64 = base64.b64encode(data.encode()).decode()
     return f'<a href="data:file/csv;base64,{b64}" download="{filename}">Click here to download</a>'
 
+# def filter_float_purchases(transactions, times_threshold):
+#     try:
+#         float_purchases = transactions[transactions['txn_type'] == 'FLOAT_DEPOSIT']
+#         repeated_float_purchases = float_purchases.groupby(['agent_code', 'ACC/NO']).filter(lambda x: len(x) > times_threshold)
+#         return repeated_float_purchases
+#     except Exception as e:
+#         st.error("An error occurred while filtering float purchases.")
+#         st.write(e)
+#         return None
+
 def filter_float_purchases(transactions, times_threshold):
     try:
-        float_purchases = transactions[transactions['txn_type'] == 'FLOAT_DEPOSIT']
+        float_purchase_keywords = ['AIRTELFLOATPURCHASE_W', 'MTNFLOATPURCHASE_W']
+        float_purchases = transactions[transactions['txn_type'].isin(float_purchase_keywords)]
         repeated_float_purchases = float_purchases.groupby(['agent_code', 'ACC/NO']).filter(lambda x: len(x) > times_threshold)
         return repeated_float_purchases
     except Exception as e:
         st.error("An error occurred while filtering float purchases.")
         st.write(e)
         return None
+
 
 def filter_cdp_transactions(transactions, times_threshold):
     try:
@@ -49,7 +80,7 @@ def filter_cdp_transactions(transactions, times_threshold):
         return None
 
 
-def flag_transactions(transactions, transaction_type, reason_code_counter):
+def flag_transactions(transactions, transaction_type, reason_code_counter,time_threshold_minutes):
     # Function to set the flagged reason
     def set_flagged_reason(row):
         if transaction_type == 'FLOAT_DEPOSIT':
@@ -69,7 +100,8 @@ def flag_transactions(transactions, transaction_type, reason_code_counter):
     for name, group in grouped:
         group = group.sort_values('date_time')
         group['time_diff'] = group['date_time'].diff()
-        group_within_15mins = group[group['time_diff'].lt(timedelta(minutes=15)) | group['time_diff'].isna()]
+        group_within_15mins= group[group['time_diff'].lt(timedelta(minutes=time_threshold_minutes)) | group['time_diff'].isna()]
+        # group_within_15mins = group[group['time_diff'].lt(timedelta(minutes=15)) | group['time_diff'].isna()]
 
         # If the group has transactions within 15 minutes
         if not group_within_15mins.empty:
@@ -88,14 +120,14 @@ def flag_transactions(transactions, transaction_type, reason_code_counter):
 
     return flagged_data, reason_code_counter
 
-def combine_and_flag_transactions(float_purchases, cdp_transactions):
+def combine_and_flag_transactions(float_purchases, cdp_transactions,time_threshold_minutes):
     reason_code_counter = 1
 
     # Flag float purchases
-    flagged_float_purchases, reason_code_counter = flag_transactions(float_purchases, 'FLOAT_DEPOSIT', reason_code_counter)
+    flagged_float_purchases, reason_code_counter = flag_transactions(float_purchases, 'FLOAT_DEPOSIT', reason_code_counter,time_threshold_minutes)
 
     # Flag CDP transactions
-    flagged_cdp_transactions, reason_code_counter = flag_transactions(cdp_transactions, 'CDP', reason_code_counter)
+    flagged_cdp_transactions, reason_code_counter = flag_transactions(cdp_transactions, 'CDP', reason_code_counter,time_threshold_minutes)
 
     # Combine flagged transactions
     combined_flagged_data = pd.concat([flagged_float_purchases, flagged_cdp_transactions], ignore_index=True)
@@ -125,16 +157,16 @@ def main_ui():
 
             times_threshold = st.slider("Time Period (times)", min_value=3, max_value=10, value=3)
 
-            with st.spinner("Filtering FLOAT_DEPOSIT Transactions: Filters FLOAT_DEPOSIT transactions based on a threshold."):
+            with st.spinner("Filtering FLOAT_PURCHASE Transactions: Filters MTN AND AIRTEL FLOAT_PURCHASE transactions based on a threshold."):
                 float_purchases = filter_float_purchases(repeated_transactions, times_threshold)
 
             with st.spinner("Filtering CDP transactions..."):
                 cdp_transactions = filter_cdp_transactions(repeated_transactions, times_threshold)
 
-
+            time_threshold_minutes = st.slider("Time Threshold (minutes)", min_value=1, max_value=60, value=15)
             # Combine and flag the FLOAT_DEPOSIT and CDP transactions
             with st.spinner("Combining and Flagging Transactions: Combines FLOAT_DEPOSIT and CDP transactions and flags them based on specific criteria"):
-                flagged_data = combine_and_flag_transactions(float_purchases, cdp_transactions)
+                flagged_data = combine_and_flag_transactions(float_purchases, cdp_transactions,time_threshold_minutes)
 
             
                 
@@ -167,12 +199,7 @@ def main_ui():
                 st.write("Download all flagged transactions (FLOAT_DEPOSIT and CDP)")
                 download_link_flagged = generate_download_link(flagged_csv, "flagged_transactions.csv")
                 st.markdown(download_link_flagged, unsafe_allow_html=True)
-            # # Convert flagged data to CSV for download
-                   
-            # if repeated_csv:
-            #     st.write("Download all transactions for FLOAT_DEPOSIT and CASH DEPOSITS")
-            #     download_link_repeated = generate_download_link(repeated_csv, "repeated_transactions.csv")
-            #     st.markdown(download_link_repeated, unsafe_allow_html=True)
+         
 
             if float_csv:
                 st.write("Download all flagged transactions for FLOAT_DEPOSIT")
@@ -190,3 +217,15 @@ def main_ui():
 
 if __name__ == "__main__":
     main_ui()
+
+
+# FILTER OUT CASH DEPOSITS AND FLOAT PURCHASES FOR MTN AND AIRTEL
+# FILTER OUT CASH DEPOSITS MADE MY THE SAME AGENT TO HE SAME ACCOUNT
+#       FILTER OUT ON TIME BASIS LIKE LETS SAY 5 MINS PERIOD
+        # FILTER OUT ON TRANSACTION LIMIT.
+# FILTER OUT TRANSACTIONS OF FLOAT PURCHASE MTN AND IRTEL
+        # FILTER OUT ON TIME BASIS
+        # FILTER OUT ON TRANSACTION BASIS
+
+# FILTER OUT CUSTOMERS WHO HAVE RECIVED CASH DEPOSITS ON THEIR ACCOUNTS FROM DIFFRENT AGENTS >3
+# 

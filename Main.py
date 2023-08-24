@@ -1,8 +1,7 @@
 
 import streamlit as st
-from BackupCode import main_ui
-from rule1 import main_ui2
 
+from improvedTest import MainNew
 def intro():
     import streamlit as st
 
@@ -20,9 +19,10 @@ def intro():
 
 page_names_to_funcs = {
     "—": intro,
+"improved stepbystep" :MainNew,
 
-    "BETTER " : main_ui,
-    "IN PROGRESS":main_ui2
+    # "BETTER " : main_ui,
+    # "IN PROGRESS":main_ui2
     
  
     # "RulesEngine": RulesEngine,

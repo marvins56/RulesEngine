@@ -1,34 +1,48 @@
-Certainly! Processing a large dataset in chunks is a common practice to handle memory constraints and improve performance. If you want to process the data in chunks, apply rules to each chunk, and then combine the flagged transactions to display them together, you can follow these steps:
+def filter_repeated_cash_deposits(cash_deposits):
+    try:
+        # Group cash deposit data by agent and account, and filter by transactions made more than once
+        repeated_cash_deposits = cash_deposits.groupby(['agent_code', 'ACC/NO']).filter(lambda x: len(x) > 1)
+        
+        return repeated_cash_deposits
+    except Exception as e:
+        st.error("An error occurred while filtering repeated cash deposits.")
+        st.write(e)
+        return None
 
-Divide the Data into Chunks: Read the data in chunks (e.g., 10,000 transactions at a time) from the uploaded CSV or Excel file.
 
-Apply Rules to Each Chunk: For each chunk, apply the selected rule to filter the flagged transactions.
+        
+# def flag_repeated_transactions_within_time_range(data, time_threshold_minutes):
+#     try:
+#         # Convert date_time column to datetime format
+#         data['date_time'] = pd.to_datetime(data['date_time'])
 
-Store Flagged Transactions: Append the flagged transactions from each chunk to a common DataFrame or list. You can also save them to separate files if needed.
+#         # Initialize an empty DataFrame to store flagged transactions
+#         flagged_transactions = pd.DataFrame()
 
-Merge Flagged Transactions: After processing all chunks, combine all the flagged transactions into a single DataFrame. This will contain the flagged transactions from all chunks.
+#         # Group data by agent and account
+#         grouped = data.groupby(['agent_code', 'ACC/NO'])
 
-Display the Merged Result: Use the color_by_agent function to color the merged DataFrame by agent, and then display it using st.dataframe.
+#         for name, group in grouped:
+#             # Sort transactions by date_time
+#             group = group.sort_values('date_time')
 
-Here's a high-level code snippet to illustrate these steps:
+#             # Calculate time difference between consecutive transactions
+#             group['time_diff'] = group['date_time'].diff()
 
-python
-Copy code
-# Define an empty DataFrame to store flagged transactions from all chunks
-all_flagged_transactions = pd.DataFrame()
+#             # Select transactions within the given time threshold
+#             within_time_range = group[group['time_diff'] <= timedelta(minutes=time_threshold_minutes)]
 
-# Read data in chunks and apply rules
-chunksize = 10000
-for chunk in pd.read_csv(uploaded_file, chunksize=chunksize):
-    # Clean and preprocess the chunk
-    chunk = clean_data(chunk)
-    
-    # Apply the selected rule to the chunk
-    flagged_transactions_chunk = apply_selected_rule(chunk, selected_rule, time_window) # Implement this function to apply the rule
-    
-    # Append the flagged transactions from this chunk
-    all_flagged_transactions = pd.concat([all_flagged_transactions, flagged_transactions_chunk])
+#             # If there are transactions within the time range, flag them
+#             if len(within_time_range) > 1:
+#                 within_time_range['flagged_reason'] = 'Multiple Transactions in Time Range'
+#                 flagged_transactions = flagged_transactions.append(within_time_range)
 
-# Display all flagged transactions together
-st.subheader("All Flagged Transactions")
-st.dataframe(color_by_agent(all_flagged_transactions))
+#         # Drop the time_diff column
+#         flagged_transactions.drop(columns=['time_diff'], inplace=True)
+
+#         return flagged_transactions
+
+#     except Exception as e:
+#         st.error("An error occurred while flagging repeated transactions within a time range.")
+#         st.write(e)
+#         return None
