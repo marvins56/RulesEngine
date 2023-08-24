@@ -194,10 +194,10 @@ def flag_customers_with_multiple_float_deposits(data, time_threshold_minutes):
         float_purchases = data[data['txn_type'].isin(['AIRTELFLOATPURCHASE_W', 'MTNFLOATPURCHASE_W'])]
 
         # Group data by customer account and agent, and count the number of float purchases
-        float_purchases_count = float_purchases.groupby(['ACC/NO', 'agent_code']).size().reset_index(name='num_Float_deposits')
+        float_purchases_count = float_purchases.groupby(['ACC/NO', 'agent_code']).size().reset_index(name='num_float_deposits')
 
         # Filter customers with more than 2 float purchases from different agents within the time threshold
-        flagged_customers = float_purchases_count[float_purchases_count['num_float_purchases'] > 2]
+        flagged_customers = float_purchases_count[float_purchases_count['num_float_deposits'] > 2]
 
         # Merge the flagged_customers with the original data to get the flagged transactions
         flagged_transactions = float_purchases.merge(flagged_customers, on=['ACC/NO', 'agent_code'])
