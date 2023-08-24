@@ -279,7 +279,7 @@ def MainNew():
                         
             # Flag repeated cash deposits transactions within time range
             with st.spinner("Flagging Repeated Cash Deposits Transactions Within Time Range"):
-                time_threshold_minutes = st.slider("Time Threshold (minutes)", min_value=1, max_value=60, value=15)
+                time_threshold_minutes = st.slider("Time Threshold (minutes)", min_value=1, max_value=15, value=5)
                 flagged_repeated_cash_deposits = flag_repeated_cash_deposits_transactions_within_time_range(cash_deposits, time_threshold_minutes)
                
                 if flagged_repeated_cash_deposits is not None:
@@ -293,7 +293,7 @@ def MainNew():
 
             # Flag float purchases to same number
             with st.spinner("Flagging Float Purchases to Same Number"):
-                time_window_minutes = st.slider("Time Window (minutes)", min_value=1, max_value=60, value=15)
+                time_window_minutes = st.slider("Time Window (minutes)", min_value=1, max_value=15, value=5)
                 flagged_transactions,flagged_float_purchases_same_number = flag_float_purchases_same_number(float_purchases, time_window_minutes)
                 
                 if flagged_float_purchases_same_number is not None:
