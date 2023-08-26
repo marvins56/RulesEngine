@@ -8,6 +8,7 @@ from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet
 from tabulate import tabulate
 import os
+import streamlit as st
 
 def process_data_and_generate_pdf(uploaded_file, batch_num):
     datadump = pd.read_excel(uploaded_file, usecols=[0, 1, 2, 3, 7, 8, 12, 14, 15, 22], skiprows = 0)
@@ -243,3 +244,5 @@ def app_ui():
 
 if __name__ == "__main__":
     app_ui()
+
+
