@@ -2,6 +2,7 @@
 import streamlit as st
 
 from improvedTest import MainNew
+from setle import app_ui
 def intro():
     import streamlit as st
 
@@ -20,6 +21,7 @@ def intro():
 page_names_to_funcs = {
     "—": intro,
 "improved stepbystep" :MainNew,
+"settlement" :app_ui
 
     # "BETTER " : main_ui,
     # "IN PROGRESS":main_ui2

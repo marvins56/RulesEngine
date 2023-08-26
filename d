@@ -1,48 +1,204 @@
-def filter_repeated_cash_deposits(cash_deposits):
-    try:
-        # Group cash deposit data by agent and account, and filter by transactions made more than once
-        repeated_cash_deposits = cash_deposits.groupby(['agent_code', 'ACC/NO']).filter(lambda x: len(x) > 1)
-        
-        return repeated_cash_deposits
-    except Exception as e:
-        st.error("An error occurred while filtering repeated cash deposits.")
-        st.write(e)
-        return None
+import pandas as pd
+from datetime import datetime
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Spacer, Paragraph
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet
+from tabulate import tabulate
+
+# Load the data
+path = r'c:\Users\dataanalyst\Desktop\Python projects\Reconciliation\datasets'
+datadump = pd.read_excel(path +'\Transactions.xlsx', usecols=[0, 1, 2, 3, 7, 8, 12, 14, 15, 22], skiprows = 0)
+
+# Filter out successful transactions for a specific batch number
+response_code_filter = datadump['Response_code'] == 0
+# Convert the 'batch' column to integer without decimals and handle missing values
+datadump['batch'] = datadump['batch'].round(0).fillna(-1).astype(int)
+
+batch_filter = datadump['batch'] == 2275
+filtered_datadump = datadump[response_code_filter & batch_filter].copy()
+
+# Rename columns
+new_column_names = {
+    'date_time': 'Tran Date', 'trn_ref': 'Tran Reference', 'batch': 'Batch',
+    'Issuer_code': 'Issuer Code', 'Acquirer_code': 'Acquirer Code',
+    'agent_code': 'Agent Code', 'Amount': 'Tran Amount', 'ACC/NO': 'Customer Account',
+    'txn_type': 'Tran Type'
+}
+filtered_datadump.rename(columns = new_column_names, inplace = True)
+
+# Drop unnecessary columns
+columns_to_drop = ['Tran Date', 'Agent Code', 'Customer Account', 'Tran Reference', 'Agent Code', 'Response_code']
+df = filtered_datadump.drop(columns = columns_to_drop, inplace = False)  # Use inplace=False to return a modified copy
+
+# Fill empty fields in "Amount" column with 0
+df['Tran Amount'].fillna(0, inplace = True)
+
+# Convert 'Trans Amount' column to numeric
+df['Tran Amount'] = pd.to_numeric(df['Tran Amount'], errors ='coerce')
+
+# Swift Code mapping dictionary
+swift_mapping = {
+    230147: 'HFINUGKA',163747: 'CERBUGKA',252947: 'KCBLUGKA',13847: 'BARCUGKX',560147: 'UGPBUGKA',20147: 'BARBUGKA',
+    110147: 'ORINUGKA',190147: 'DTKEUGKA',360147: 'CBAFUGKA',80147: 'SCBLUGKA',60147: 'TROAUGKA',320147: 'EXTNUGKA',
+    180147: 'CAIEUGKA',260147: 'UNAFUGKA',610147: 'OPUGUGKA',730147: 'CERBUGKA',290147: 'ECOCUGKA',270147: 'GTBIUGKA',
+    40147: 'SBICUGKX',300147: 'EQBLUGKA',50147: 'DFCUUGKA',410147: 'FTBLUGKA',130447: 'AFRIUGKA'}
+
+# Map Issuer Code to Swift Code using the dictionary
+df['Payer'] = df['Acquirer Code'].map(swift_mapping)
+df['Beneficiary'] = df['Issuer Code'].map(swift_mapping)
+
+# Extract the batch number (assuming it's the same for all rows)
+batch_number = df.iloc[0]['Batch']
 
 
-        
-# def flag_repeated_transactions_within_time_range(data, time_threshold_minutes):
-#     try:
-#         # Convert date_time column to datetime format
-#         data['date_time'] = pd.to_datetime(data['date_time'])
+combined_dict = {}
 
-#         # Initialize an empty DataFrame to store flagged transactions
-#         flagged_transactions = pd.DataFrame()
+for index, row in df.iterrows():
+    acquirer = row["Payer"]
+    issuer = row["Beneficiary"]
+    tran_amount = row["Tran Amount"]
+    key = (acquirer, issuer)
+    
+    if acquirer != issuer and row["Tran Type"] not in ["CLF", "CWD"]:
+        if key in combined_dict:
+            combined_dict[key] += tran_amount
+        else:
+            combined_dict[key] = tran_amount
 
-#         # Group data by agent and account
-#         grouped = data.groupby(['agent_code', 'ACC/NO'])
+    if acquirer != issuer and row["Tran Type"] in ["CLF", "CWD"]:
+        if key in combined_dict:
+            combined_dict[key] += tran_amount
+        else:
+            combined_dict[key] = tran_amount
 
-#         for name, group in grouped:
-#             # Sort transactions by date_time
-#             group = group.sort_values('date_time')
+# Convert combined_dict to DataFrame
+combined_result = pd.DataFrame(combined_dict.items(), columns=["Key", "Amount"])
 
-#             # Calculate time difference between consecutive transactions
-#             group['time_diff'] = group['date_time'].diff()
+# Split the "Key" column into "Acquirer Code" and "Issuer Code" columns
+combined_result[["Payer", "Beneficiary"]] = pd.DataFrame(combined_result["Key"].tolist(), index=combined_result.index)
 
-#             # Select transactions within the given time threshold
-#             within_time_range = group[group['time_diff'] <= timedelta(minutes=time_threshold_minutes)]
+# Drop the "Key" column
+combined_result = combined_result.drop(columns=["Key"])
 
-#             # If there are transactions within the time range, flag them
-#             if len(within_time_range) > 1:
-#                 within_time_range['flagged_reason'] = 'Multiple Transactions in Time Range'
-#                 flagged_transactions = flagged_transactions.append(within_time_range)
+# Convert "Amount" column to numeric
+combined_result["Amount"] = combined_result["Amount"].astype(float)
 
-#         # Drop the time_diff column
-#         flagged_transactions.drop(columns=['time_diff'], inplace=True)
+# Remove rows with NaN or zero Amount
+combined_result = combined_result[combined_result["Amount"].notna() & (combined_result["Amount"] != 0)]
 
-#         return flagged_transactions
+# Calculate total_amount and create total_row
 
-#     except Exception as e:
-#         st.error("An error occurred while flagging repeated transactions within a time range.")
-#         st.write(e)
-#         return None
+#combined_result["Payer"] = ["Total", "", f"{total_amount:,.0f}"]
+
+# Append total_row to the DataFrame
+#combined_result.loc[len(combined_result)] = total_row
+
+# Convert "Acquirer" column to strings
+combined_result["Payer"] = combined_result["Payer"].astype(str)
+
+# Order records by Acquirer Code column
+combined_result = combined_result.sort_values(by=["Payer"])
+
+# Format and align columns for display
+print("Combined Table:")
+print(tabulate(combined_result, headers="keys", tablefmt="grid", showindex=False, numalign="center", stralign="center", colalign=("center", "center", "center")))
+
+# Create a PDF using reportlab
+pdf_filename = f"Settlement Report {int(batch_number)}.pdf"
+doc = SimpleDocTemplate(pdf_filename, pagesize=letter)
+
+# Create a list to hold elements for the PDF
+elements = []
+
+# Add title with batch number
+title_style = getSampleStyleSheet()["Title"]
+title = Paragraph("Settlement Report", title_style)
+elements.append(title)
+
+# Add batch number
+batch_number_text = f"Batch Number: {batch_number}"
+batch_number_style = getSampleStyleSheet()["Normal"]
+batch_number_paragraph = Paragraph(batch_number_text, batch_number_style)
+elements.append(batch_number_paragraph)
+
+# Add a spacer
+elements.append(Spacer(1, 20))  # Adds a vertical space of 20 points
+elements.append(Spacer(1, 20))  # Adds a vertical space of 20 points
+
+# Add subtitle
+subtitle_style = getSampleStyleSheet()["Normal"]
+subtitle = Paragraph("Settled by:", subtitle_style)
+elements.append(subtitle)
+
+# Create a spacer
+elements.append(Spacer(1, 10))  # Adds a smaller vertical space
+elements.append(Spacer(1, 10))  # Adds a smaller vertical space
+
+# Create a signature section
+signature_style = getSampleStyleSheet()["Normal"]
+signature_section = Paragraph("Signature: _______________________", signature_style) 
+elements.append(signature_section)
+
+# Create a spacer
+elements.append(Spacer(1, 20))  # Adds a vertical space of 20 points
+elements.append(Spacer(1, 20))  # Adds a vertical space of 20 points
+
+# Create a list to hold table data
+table_data = []
+
+# Add header row to table data
+table_data.append(["Payer", "Beneficiary", "Amount"])
+
+# Add rows from the combined result to the table data
+for _, row in combined_result.iterrows():
+    if row['Payer'] == "Total":
+        continue  # Skip the 'Total' row
+    Payer = row['Payer']
+    Beneficiary = row['Beneficiary']
+    Amount = f"{int(row['Amount']):,}"  # format amount, add comma separaters, remove decimals
+    table_data.append([Payer, Beneficiary, Amount])
+
+# Create a Table object
+# Add "Total" row at the end
+total_row = ["Total", "", f"{total_amount:,.0f}"]
+table_data.append(total_row)
+table = Table(table_data)
+
+# Apply TableStyle to format the table
+table.setStyle(TableStyle([('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+                           ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                           ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                           ('ALIGN', (0, 0), (-1, 0), 'LEFT'),  # Align Payer and Beneficiary to the left
+                           ('ALIGN', (-1, 0), (-1, -1), 'RIGHT'),  # Align Trans Amount to the right
+                           ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                           ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                           ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                           ('GRID', (0, 0), (-1, -1), 1, colors.black)]))
+
+# Add the table to the elements list
+elements.append(table)
+
+# Add a spacer
+elements.append(Spacer(1, 20))  # Adds a vertical space of 20 points
+
+# Add "Signed and approved by" section
+signed_approved_text = "Signed and approved by: Head of Operations"
+signed_approved_style = getSampleStyleSheet()["Normal"]
+signed_approved_section = Paragraph(signed_approved_text, signed_approved_style)
+elements.append(signed_approved_section)
+
+# Add a spacer
+elements.append(Spacer(1, 20))  # Adds a smaller vertical space
+elements.append(Spacer(1, 20))  # Adds a vertical space of 20 points
+
+# Add signature and date section
+signature_date = f"Signature: _______________________      Date: {datetime.now().strftime('%Y-%m-%d')}"
+signature_date_style = getSampleStyleSheet()["Normal"]
+signature_date_section = Paragraph(signature_date, signature_date_style)
+elements.append(signature_date_section)
+
+# Build the PDF
+doc.build(elements)
+
+print(f"PDF saved as {pdf_filename}")
